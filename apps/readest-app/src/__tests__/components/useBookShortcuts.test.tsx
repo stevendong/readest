@@ -94,7 +94,6 @@ vi.mock('@/services/environment', () => ({
 vi.mock('@/utils/window', () => ({
   tauriHandleClose: vi.fn(),
   tauriHandleToggleFullScreen: vi.fn(),
-  tauriQuitApp: vi.fn(),
 }));
 
 vi.mock('@/utils/style', () => ({

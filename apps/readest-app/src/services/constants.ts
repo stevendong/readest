@@ -82,19 +82,15 @@ export const DEFAULT_HARDCOVER_SETTINGS = {
 
 export const DEFAULT_SYSTEM_SETTINGS: Partial<SystemSettings> = {
   keepLogin: false,
-  autoUpload: true,
-  alwaysOnTop: false,
   openBookInNewWindow: true,
   alwaysShowStatusBar: false,
   alwaysInForeground: false,
-  autoCheckUpdates: true,
   screenWakeLock: false,
   screenBrightness: -1, // -1~100, -1 for system default
   autoScreenBrightness: true,
   openLastBooks: false,
   lastOpenBooks: [],
   autoImportBooksOnOpen: false,
-  telemetryEnabled: true,
   discordRichPresenceEnabled: false,
   libraryViewMode: 'grid',
   librarySortBy: LibrarySortByType.Updated,

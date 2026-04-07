@@ -81,10 +81,7 @@ export interface SystemSettings {
   customRootDir?: string;
 
   keepLogin: boolean;
-  autoUpload: boolean;
-  alwaysOnTop: boolean;
   openBookInNewWindow: boolean;
-  autoCheckUpdates: boolean;
   screenWakeLock: boolean;
   screenBrightness: number;
   autoScreenBrightness: boolean;
@@ -95,7 +92,6 @@ export interface SystemSettings {
   autoImportBooksOnOpen: boolean;
   savedBookCoverForLockScreen: string;
   savedBookCoverForLockScreenPath: string;
-  telemetryEnabled: boolean;
   discordRichPresenceEnabled: boolean;
   libraryViewMode: LibraryViewModeType;
   librarySortBy: LibrarySortByType;

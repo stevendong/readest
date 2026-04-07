@@ -55,14 +55,10 @@ function createMockOptions(
     openSettingsPanel: vi.fn(),
     toggleTheme: vi.fn(),
     toggleFullscreen: vi.fn(),
-    toggleAlwaysOnTop: vi.fn(),
     toggleScreenWakeLock: vi.fn(),
-    toggleAutoUpload: vi.fn(),
     reloadPage: vi.fn(),
     toggleOpenLastBooks: vi.fn(),
     showAbout: vi.fn(),
-    toggleTelemetry: vi.fn(),
-    isDesktop: false,
     ...overrides,
   };
 }
@@ -98,7 +94,6 @@ describe('buildCommandRegistry', () => {
     expect(actionIds).toContain('action.fullscreen');
     expect(actionIds).toContain('action.reload');
     expect(actionIds).toContain('action.about');
-    expect(actionIds).toContain('action.telemetry');
   });
 
   it('should use the provided translation function for localized labels', () => {
@@ -141,25 +136,14 @@ describe('buildCommandRegistry', () => {
     expect(reloadPage).toHaveBeenCalled();
   });
 
-  it('should set isAvailable for desktop-only actions', () => {
-    const items = buildCommandRegistry(createMockOptions({ isDesktop: false }));
+  it('should not have isAvailable guards on action items (web-only)', () => {
+    const items = buildCommandRegistry(createMockOptions());
 
     const fullscreen = items.find((i) => i.id === 'action.fullscreen')!;
-    expect(fullscreen.isAvailable).toBeDefined();
-    expect(fullscreen.isAvailable!()).toBe(false);
-
-    const alwaysOnTop = items.find((i) => i.id === 'action.alwaysOnTop')!;
-    expect(alwaysOnTop.isAvailable!()).toBe(false);
+    expect(fullscreen.isAvailable).toBeUndefined();
 
     const openLastBooks = items.find((i) => i.id === 'action.openLastBooks')!;
-    expect(openLastBooks.isAvailable!()).toBe(false);
-  });
-
-  it('should report desktop-only actions as available on desktop', () => {
-    const items = buildCommandRegistry(createMockOptions({ isDesktop: true }));
-
-    const fullscreen = items.find((i) => i.id === 'action.fullscreen')!;
-    expect(fullscreen.isAvailable!()).toBe(true);
+    expect(openLastBooks.isAvailable).toBeUndefined();
   });
 
   it('should not set isAvailable for non-desktop-only actions', () => {
@@ -174,11 +158,10 @@ describe('buildCommandRegistry', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('should include AI panel items in non-production', () => {
+  it('should not include AI panel items (AI feature removed)', () => {
     const items = buildCommandRegistry(createMockOptions());
     const aiItems = items.filter((i) => i.panel === 'AI');
-    // In test environment (not production), AI items should be included
-    expect(aiItems.length).toBeGreaterThan(0);
+    expect(aiItems.length).toBe(0);
   });
 
   it('should give each settings item keywords and section', () => {
@@ -215,17 +198,14 @@ describe('searchCommands', () => {
     expect(hasFontResult).toBe(true);
   });
 
-  it('should filter out unavailable items', () => {
-    const itemsNonDesktop = buildCommandRegistry(createMockOptions({ isDesktop: false }));
-    const results = searchCommands('fullscreen', itemsNonDesktop);
-    // Fullscreen is desktop-only; should not appear when isDesktop is false
+  it('should find fullscreen action', () => {
+    const results = searchCommands('fullscreen', items);
     const hasFullscreen = results.some((r) => r.item.id === 'action.fullscreen');
-    expect(hasFullscreen).toBe(false);
+    expect(hasFullscreen).toBe(true);
   });
 
   it('should include available items', () => {
-    const desktopItems = buildCommandRegistry(createMockOptions({ isDesktop: true }));
-    const results = searchCommands('fullscreen', desktopItems);
+    const results = searchCommands('fullscreen', items);
     const hasFullscreen = results.some((r) => r.item.id === 'action.fullscreen');
     expect(hasFullscreen).toBe(true);
   });
@@ -257,7 +237,7 @@ describe('groupResultsByCategory', () => {
   let items: CommandItem[];
 
   beforeEach(() => {
-    items = buildCommandRegistry(createMockOptions({ isDesktop: true }));
+    items = buildCommandRegistry(createMockOptions());
   });
 
   it('should group results by category', () => {

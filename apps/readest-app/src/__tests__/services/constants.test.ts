@@ -224,16 +224,12 @@ describe('services/constants', () => {
 
     it('has boolean flags', () => {
       expect(typeof DEFAULT_SYSTEM_SETTINGS.keepLogin).toBe('boolean');
-      expect(typeof DEFAULT_SYSTEM_SETTINGS.autoUpload).toBe('boolean');
-      expect(typeof DEFAULT_SYSTEM_SETTINGS.alwaysOnTop).toBe('boolean');
       expect(typeof DEFAULT_SYSTEM_SETTINGS.openBookInNewWindow).toBe('boolean');
       expect(typeof DEFAULT_SYSTEM_SETTINGS.alwaysShowStatusBar).toBe('boolean');
       expect(typeof DEFAULT_SYSTEM_SETTINGS.alwaysInForeground).toBe('boolean');
-      expect(typeof DEFAULT_SYSTEM_SETTINGS.autoCheckUpdates).toBe('boolean');
       expect(typeof DEFAULT_SYSTEM_SETTINGS.screenWakeLock).toBe('boolean');
       expect(typeof DEFAULT_SYSTEM_SETTINGS.openLastBooks).toBe('boolean');
       expect(typeof DEFAULT_SYSTEM_SETTINGS.autoImportBooksOnOpen).toBe('boolean');
-      expect(typeof DEFAULT_SYSTEM_SETTINGS.telemetryEnabled).toBe('boolean');
       expect(typeof DEFAULT_SYSTEM_SETTINGS.discordRichPresenceEnabled).toBe('boolean');
     });
 

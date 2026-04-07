@@ -1,8 +1,6 @@
-import { getAllWindows, getCurrentWindow } from '@tauri-apps/api/window';
-import { emitTo, TauriEvent } from '@tauri-apps/api/event';
-import { exit } from '@tauri-apps/plugin-process';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { emitTo } from '@tauri-apps/api/event';
 import { type as osType } from '@tauri-apps/plugin-os';
-import { eventDispatcher } from './event';
 
 export const tauriGetWindowLogicalPosition = async () => {
   const currentWindow = getCurrentWindow();
@@ -73,26 +71,4 @@ export const tauriHandleToggleFullScreen = async () => {
   if ((await osType()) === 'linux') {
     linuxWindowRestoreTransparentBg();
   }
-};
-
-export const tauriHandleSetAlwaysOnTop = async (isAlwaysOnTop: boolean) => {
-  const windows = await getAllWindows();
-  await Promise.all(windows.map((w) => w.setAlwaysOnTop(isAlwaysOnTop)));
-};
-
-export const tauriGetAlwaysOnTop = async () => {
-  const currentWindow = getCurrentWindow();
-  return await currentWindow.isAlwaysOnTop();
-};
-
-export const tauriHandleOnWindowFocus = async (callback: () => void) => {
-  const currentWindow = getCurrentWindow();
-  return currentWindow.listen(TauriEvent.WINDOW_FOCUS, async () => {
-    await callback();
-  });
-};
-
-export const tauriQuitApp = async () => {
-  await eventDispatcher.dispatch('quit-app');
-  await exit(0);
 };
