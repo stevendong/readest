@@ -1,18 +1,17 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl =
-  process.env['SUPABASE_URL'] ||
-  process.env['NEXT_PUBLIC_SUPABASE_URL'] ||
-  atob(process.env['NEXT_PUBLIC_DEFAULT_SUPABASE_URL_BASE64']!);
-const supabaseAnonKey =
-  process.env['SUPABASE_ANON_KEY'] ||
-  process.env['NEXT_PUBLIC_SUPABASE_ANON_KEY'] ||
-  atob(process.env['NEXT_PUBLIC_DEFAULT_SUPABASE_KEY_BASE64']!);
+const supabaseUrl = process.env['NEXT_PUBLIC_SUPABASE_URL'] || '';
+const supabaseAnonKey = process.env['NEXT_PUBLIC_SUPABASE_ANON_KEY'] || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Use a placeholder URL when env vars are not set (e.g., in tests)
+const PLACEHOLDER_URL = 'http://localhost:0';
+const effectiveUrl = supabaseUrl || PLACEHOLDER_URL;
+const effectiveKey = supabaseAnonKey || 'placeholder-key';
+
+export const supabase: SupabaseClient = createClient(effectiveUrl, effectiveKey);
 
 export const createSupabaseClient = (accessToken?: string) => {
-  return createClient(supabaseUrl, supabaseAnonKey, {
+  return createClient(effectiveUrl, effectiveKey, {
     global: {
       headers: accessToken
         ? {
@@ -25,7 +24,7 @@ export const createSupabaseClient = (accessToken?: string) => {
 
 export const createSupabaseAdminClient = () => {
   const supabaseAdminKey = process.env['SUPABASE_ADMIN_KEY'] || '';
-  return createClient(supabaseUrl, supabaseAdminKey, {
+  return createClient(effectiveUrl, supabaseAdminKey || effectiveKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,

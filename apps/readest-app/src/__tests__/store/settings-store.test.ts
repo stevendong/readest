@@ -22,7 +22,6 @@ function makeSettings(overrides: Partial<SystemSettings> = {}): SystemSettings {
   return {
     version: 1,
     localBooksDir: '/books',
-    keepLogin: false,
     openBookInNewWindow: false,
     screenWakeLock: false,
     screenBrightness: 1,

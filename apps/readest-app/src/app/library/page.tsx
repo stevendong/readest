@@ -15,6 +15,8 @@ import { getImportErrorMessage } from '@/services/errors';
 import { eventDispatcher } from '@/utils/event';
 import { getDirPath, getFilename } from '@/utils/path';
 import { isWebAppPlatform } from '@/services/environment';
+import { fetchTasks } from '@/services/pdf2epubApi';
+import { tasksToBooks } from '@/utils/taskToBook';
 
 import { useEnv } from '@/context/EnvContext';
 import { useAuth } from '@/context/AuthContext';
@@ -58,7 +60,7 @@ const LibraryPageWithSearchParams = () => {
 const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchParams | null }) => {
   const router = useAppRouter();
   const { envConfig, appService } = useEnv();
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const {
     library: libraryBooks,
     updateBook,
@@ -74,7 +76,7 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
   const { selectFiles } = useFileSelector(appService, _);
   const { safeAreaInsets: insets, isRoundedWindow } = useThemeStore();
   const { clearBookData } = useBookDataStore();
-  const { settings, setSettings, saveSettings } = useSettingsStore();
+  const { settings, setSettings } = useSettingsStore();
   const { isSettingsDialogOpen, setSettingsDialogOpen } = useSettingsStore();
   const [loading, setLoading] = useState(false);
   const [libraryLoaded, setLibraryLoaded] = useState(false);
@@ -216,28 +218,27 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
     if (isInitiating.current) return;
     isInitiating.current = true;
 
-    const initLogin = async () => {
-      const appService = await envConfig.getAppService();
-      const settings = await appService.loadSettings();
-      if (token && user) {
-        if (!settings.keepLogin) {
-          settings.keepLogin = true;
-          setSettings(settings);
-          saveSettings(envConfig, settings);
-        }
-      } else if (settings.keepLogin) {
-        router.push('/auth');
-      }
-    };
-
     const loadingTimeout = setTimeout(() => setLoading(true), 300);
     const initLibrary = async () => {
       const appService = await envConfig.getAppService();
       const settings = await appService.loadSettings();
       setSettings(settings);
 
-      // Reuse the library from the store when we return from the reader
-      const library = libraryBooks.length > 0 ? libraryBooks : await appService.loadLibraryBooks();
+      // Load library: try pdf2epub API first, fall back to local storage
+      let library: Book[];
+      if (libraryBooks.length > 0) {
+        // Reuse the library from the store when we return from the reader
+        library = libraryBooks;
+      } else {
+        try {
+          const response = await fetchTasks(1, 100, 'completed');
+          library = tasksToBooks(response.tasks);
+        } catch (err) {
+          console.warn('Failed to load books from pdf2epub API, falling back to local:', err);
+          library = await appService.loadLibraryBooks();
+        }
+      }
+
       let opened = false;
       if (!opened && checkLastOpenBooks && settings.openLastBooks) {
         opened = await handleOpenLastBooks(settings.lastOpenBooks, library);
@@ -250,7 +251,6 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
       setLoading(false);
     };
 
-    initLogin();
     initLibrary();
     return () => {
       setCheckLastOpenBooks(false);
@@ -596,14 +596,33 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
             <div className='hero-content text-neutral-content text-center'>
               <div className='max-w-md'>
                 <h1 className='mb-5 text-5xl font-bold'>{_('Your Library')}</h1>
-                <p className='mb-5'>
-                  {_(
-                    'Welcome to your library. You can import your books here and read them anytime.',
-                  )}
-                </p>
-                <button className='btn btn-primary rounded-xl' onClick={handleImportBooksFromFiles}>
-                  {_('Import Books')}
-                </button>
+                {user ? (
+                  <>
+                    <p className='mb-5'>
+                      {_(
+                        'Welcome to your library. You can import your books here and read them anytime.',
+                      )}
+                    </p>
+                    <button
+                      className='btn btn-primary rounded-xl'
+                      onClick={handleImportBooksFromFiles}
+                    >
+                      {_('Import Books')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className='mb-5'>
+                      {_('Please sign in at pdf2epub.com to view your converted books.')}
+                    </p>
+                    <button
+                      className='btn btn-primary rounded-xl'
+                      onClick={() => window.open('https://pdf2epub.com', '_blank')}
+                    >
+                      {_('Go to pdf2epub.com')}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -80,7 +80,6 @@ export interface SystemSettings {
   localBooksDir: string;
   customRootDir?: string;
 
-  keepLogin: boolean;
   openBookInNewWindow: boolean;
   screenWakeLock: boolean;
   screenBrightness: number;

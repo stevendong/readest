@@ -9,6 +9,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useBookDataStore } from '@/store/bookDataStore';
 import { useReaderStore } from '@/store/readerStore';
 import { useSidebarStore } from '@/store/sidebarStore';
+import { useLibraryStore } from '@/store/libraryStore';
 import { useGamepad } from '@/hooks/useGamepad';
 import { useTranslation } from '@/hooks/useTranslation';
 import { SystemSettings } from '@/types/settings';
@@ -24,6 +25,8 @@ import { navigateToLibrary } from '@/utils/nav';
 import { clearDiscordPresence } from '@/utils/discord';
 import { BOOK_IDS_SEPARATOR } from '@/services/constants';
 import { BookDetailModal } from '@/components/metadata';
+import { fetchTask } from '@/services/pdf2epubApi';
+import { taskToBook } from '@/utils/taskToBook';
 
 import useBooksManager from '../hooks/useBooksManager';
 import useBookShortcuts from '../hooks/useBookShortcuts';
@@ -40,6 +43,7 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
   const { envConfig, appService } = useEnv();
   const { bookKeys, dismissBook, getNextBookKey } = useBooksManager();
   const { sideBarBookKey, setSideBarBookKey } = useSidebarStore();
+  const { setLibrary } = useLibraryStore();
   const { saveSettings } = useSettingsStore();
   const { getConfig, getBookData, saveConfig } = useBookDataStore();
   const { getView, setBookKeys, getViewSettings } = useReaderStore();
@@ -57,31 +61,61 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
     if (isInitiating.current) return;
     isInitiating.current = true;
 
-    const pathname = window.location.pathname;
-    const bookIds = ids || searchParams?.get('ids') || pathname.split('/reader/')[1] || '';
-    const initialIds = bookIds.split(BOOK_IDS_SEPARATOR).filter(Boolean);
-    const initialBookKeys = initialIds.map((id) => `${id}-${uniqueId()}`);
-    setBookKeys(initialBookKeys);
-    const uniqueIds = new Set<string>();
-    console.log('Initialize books', initialBookKeys);
-    initialBookKeys.forEach((key, index) => {
-      const id = key.split('-')[0]!;
-      const isPrimary = !uniqueIds.has(id);
-      uniqueIds.add(id);
-      if (!getViewState(key)) {
-        initViewState(envConfig, id, key, isPrimary).catch((error) => {
-          console.log('Error initializing book', key, error);
+    const initBooks = async () => {
+      const pathname = window.location.pathname;
+      let bookIds = ids || searchParams?.get('ids') || pathname.split('/reader/')[1] || '';
+
+      // Handle ?task=xxx parameter: fetch the task and add it to the library
+      const taskId = searchParams?.get('task');
+      if (taskId && !bookIds) {
+        try {
+          const task = await fetchTask(taskId);
+          const book = taskToBook(task);
+          // Add to library if not already present
+          const existingBooks = useLibraryStore.getState().library;
+          if (!existingBooks.find((b) => b.hash === book.hash)) {
+            setLibrary([...existingBooks, book]);
+          }
+          bookIds = book.hash;
+        } catch (err) {
+          console.error('Failed to load task from pdf2epub:', err);
           setErrorLoading(true);
           eventDispatcher.dispatch('toast', {
-            message: _('Unable to open book'),
+            message: _('Unable to load book from pdf2epub'),
             callback: () => navigateBackToLibrary(),
             timeout: 2000,
             type: 'error',
           });
-        });
-        if (index === 0) setSideBarBookKey(key);
+          return;
+        }
       }
-    });
+
+      const initialIds = bookIds.split(BOOK_IDS_SEPARATOR).filter(Boolean);
+      const initialBookKeys = initialIds.map((id) => `${id}-${uniqueId()}`);
+      setBookKeys(initialBookKeys);
+      const uniqueIds = new Set<string>();
+      console.log('Initialize books', initialBookKeys);
+      initialBookKeys.forEach((key, index) => {
+        const id = key.split('-')[0]!;
+        const isPrimary = !uniqueIds.has(id);
+        uniqueIds.add(id);
+        if (!getViewState(key)) {
+          initViewState(envConfig, id, key, isPrimary).catch((error) => {
+            console.log('Error initializing book', key, error);
+            setErrorLoading(true);
+            eventDispatcher.dispatch('toast', {
+              message: _('Unable to open book'),
+              callback: () => navigateBackToLibrary(),
+              timeout: 2000,
+              type: 'error',
+            });
+          });
+          if (index === 0) setSideBarBookKey(key);
+        }
+      });
+    };
+
+    initBooks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

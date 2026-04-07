@@ -14,7 +14,7 @@ import { useLibraryStore } from '@/store/libraryStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useResponsiveSize } from '@/hooks/useResponsiveSize';
-import { navigateToLogin, navigateToProfile } from '@/utils/nav';
+import { navigateToProfile } from '@/utils/nav';
 import { setAboutDialogVisible } from '@/components/AboutWindow';
 import { saveSysSettings } from '@/helpers/settings';
 import UserAvatar from '@/components/UserAvatar';
@@ -47,11 +47,6 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ setIsDropdownOpen }) => {
 
   const downloadReadest = () => {
     window.open(DOWNLOAD_READEST_URL, '_blank');
-    setIsDropdownOpen?.(false);
-  };
-
-  const handleUserLogin = () => {
-    navigateToLogin(router);
     setIsDropdownOpen?.(false);
   };
 
@@ -162,7 +157,11 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ setIsDropdownOpen }) => {
           </ul>
         </MenuItem>
       ) : (
-        <MenuItem label={_('Sign In')} Icon={PiUserCircle} onClick={handleUserLogin}></MenuItem>
+        <MenuItem
+          label={_('Sign in at pdf2epub.com')}
+          Icon={PiUserCircle}
+          onClick={() => window.open('https://pdf2epub.com', '_blank')}
+        ></MenuItem>
       )}
 
       <MenuItem

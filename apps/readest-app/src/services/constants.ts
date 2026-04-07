@@ -81,7 +81,6 @@ export const DEFAULT_HARDCOVER_SETTINGS = {
 } as HardcoverSettings;
 
 export const DEFAULT_SYSTEM_SETTINGS: Partial<SystemSettings> = {
-  keepLogin: false,
   openBookInNewWindow: true,
   alwaysShowStatusBar: false,
   alwaysInForeground: false,

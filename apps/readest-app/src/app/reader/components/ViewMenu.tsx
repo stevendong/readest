@@ -1,7 +1,6 @@
 import clsx from 'clsx';
 import React, { useEffect } from 'react';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { BiMoon, BiSun } from 'react-icons/bi';
 import { TbSunMoon } from 'react-icons/tb';
 import { MdZoomOut, MdZoomIn, MdCheck } from 'react-icons/md';
@@ -19,7 +18,6 @@ import { useBookDataStore } from '@/store/bookDataStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getStyles } from '@/utils/style';
-import { navigateToLogin } from '@/utils/nav';
 import { eventDispatcher } from '@/utils/event';
 import { getMaxInlineSize } from '@/utils/config';
 import { formatLocaleDateTime } from '@/utils/book';
@@ -35,7 +33,6 @@ interface ViewMenuProps {
 
 const ViewMenu: React.FC<ViewMenuProps> = ({ bookKey, setIsDropdownOpen }) => {
   const _ = useTranslation();
-  const router = useRouter();
   const { user } = useAuth();
   const { envConfig, appService } = useEnv();
   const { getConfig, getBookData } = useBookDataStore();
@@ -87,8 +84,8 @@ const ViewMenu: React.FC<ViewMenuProps> = ({ bookKey, setIsDropdownOpen }) => {
 
   const handleSync = () => {
     if (!user) {
-      navigateToLogin(router);
-      setIsDropdownOpen?.(false);
+      // No login redirect; user must sign in via pdf2epub.com
+      return;
     } else {
       eventDispatcher.dispatch('sync-book-progress', { bookKey });
     }

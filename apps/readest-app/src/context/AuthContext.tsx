@@ -7,7 +7,6 @@ import { supabase } from '@/utils/supabase';
 interface AuthContextType {
   token: string | null;
   user: User | null;
-  login: (token: string, user: User) => void;
   logout: () => void;
   refresh: () => void;
 }
@@ -49,11 +48,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
       }
     };
-    const refreshSession = async () => {
-      try {
-        await supabase.auth.refreshSession();
-      } catch {
-        syncSession(null);
+
+    const initFromUrl = async () => {
+      if (typeof window === 'undefined') return;
+      const params = new URLSearchParams(window.location.search);
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      if (accessToken && refreshToken) {
+        try {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) {
+            console.error('Failed to set session from URL:', error);
+          } else {
+            // Clean up URL params after successful session setup
+            const url = new URL(window.location.href);
+            url.searchParams.delete('access_token');
+            url.searchParams.delete('refresh_token');
+            window.history.replaceState({}, '', url.toString());
+          }
+        } catch (err) {
+          console.error('Error setting session from URL:', err);
+        }
+      } else {
+        // No URL tokens, try refreshing existing session
+        try {
+          await supabase.auth.refreshSession();
+        } catch {
+          syncSession(null);
+        }
       }
     };
 
@@ -61,19 +86,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       syncSession(session);
     });
 
-    refreshSession();
+    initFromUrl();
     return () => {
       subscription?.subscription.unsubscribe();
     };
   }, []);
-
-  const login = (newToken: string, newUser: User) => {
-    console.log('Logging in');
-    setToken(newToken);
-    setUser(newUser);
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
-  };
 
   const logout = async () => {
     console.log('Logging out');
@@ -96,9 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, refresh }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={{ token, user, logout, refresh }}>{children}</AuthContext.Provider>
   );
 };
 
