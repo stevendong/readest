@@ -28,8 +28,6 @@ describe('libraryStore', () => {
     useLibraryStore.setState({
       library: [],
       libraryLoaded: false,
-      isSyncing: false,
-      syncProgress: 0,
       currentBookshelf: [],
       selectedBooks: new Set(),
       groups: {},

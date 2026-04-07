@@ -559,19 +559,9 @@ const actionItems = [
     keywords: ['fullscreen', 'full', 'screen', 'maximize', 'window'],
   },
   {
-    id: 'action.alwaysOnTop',
-    labelKey: _('Always on Top'),
-    keywords: ['always', 'top', 'pin', 'window', 'float'],
-  },
-  {
     id: 'action.screenWakeLock',
     labelKey: _('Keep Screen Awake'),
     keywords: ['screen', 'wake', 'lock', 'awake', 'sleep', 'display'],
-  },
-  {
-    id: 'action.autoUpload',
-    labelKey: _('Auto Upload Books to Cloud'),
-    keywords: ['auto', 'upload', 'cloud', 'sync', 'backup'],
   },
   {
     id: 'action.reload',
@@ -588,11 +578,6 @@ const actionItems = [
     labelKey: _('About Readest'),
     keywords: ['about', 'readest', 'version', 'info'],
   },
-  {
-    id: 'action.telemetry',
-    labelKey: _('Help improve Readest'),
-    keywords: ['telemetry', 'analytics', 'improve', 'statistics'],
-  },
 ];
 
 export interface CommandRegistryOptions {
@@ -600,19 +585,15 @@ export interface CommandRegistryOptions {
   openSettingsPanel: (panel: SettingsPanelType, itemId?: string) => void;
   toggleTheme: () => void;
   toggleFullscreen: () => void;
-  toggleAlwaysOnTop: () => void;
   toggleScreenWakeLock: () => void;
-  toggleAutoUpload: () => void;
   reloadPage: () => void;
   toggleOpenLastBooks: () => void;
   showAbout: () => void;
-  toggleTelemetry: () => void;
-  isDesktop: boolean;
   // TODO: add reader-specific actions when reader is open (tts, bookmark, etc.)
 }
 
 export const buildCommandRegistry = (options: CommandRegistryOptions): CommandItem[] => {
-  const { _, openSettingsPanel, isDesktop } = options;
+  const { _, openSettingsPanel } = options;
   const items: CommandItem[] = [];
 
   // helper to create settings item
@@ -701,15 +682,6 @@ export const buildCommandRegistry = (options: CommandRegistryOptions): CommandIt
     createActionItem({
       id: 'action.fullscreen',
       action: options.toggleFullscreen,
-      isAvailable: () => isDesktop,
-    }),
-  );
-
-  items.push(
-    createActionItem({
-      id: 'action.alwaysOnTop',
-      action: options.toggleAlwaysOnTop,
-      isAvailable: () => isDesktop,
     }),
   );
 
@@ -717,13 +689,6 @@ export const buildCommandRegistry = (options: CommandRegistryOptions): CommandIt
     createActionItem({
       id: 'action.screenWakeLock',
       action: options.toggleScreenWakeLock,
-    }),
-  );
-
-  items.push(
-    createActionItem({
-      id: 'action.autoUpload',
-      action: options.toggleAutoUpload,
     }),
   );
 
@@ -739,7 +704,6 @@ export const buildCommandRegistry = (options: CommandRegistryOptions): CommandIt
     createActionItem({
       id: 'action.openLastBooks',
       action: options.toggleOpenLastBooks,
-      isAvailable: () => isDesktop,
     }),
   );
 
@@ -747,13 +711,6 @@ export const buildCommandRegistry = (options: CommandRegistryOptions): CommandIt
     createActionItem({
       id: 'action.about',
       action: options.showAbout,
-    }),
-  );
-
-  items.push(
-    createActionItem({
-      id: 'action.telemetry',
-      action: options.toggleTelemetry,
     }),
   );
 

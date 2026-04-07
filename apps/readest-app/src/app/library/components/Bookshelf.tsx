@@ -413,17 +413,12 @@ const Bookshelf: React.FC<BookshelfProps> = ({
             itemSelected={
               'hash' in item ? selectedBooks.includes(item.hash) : selectedBooks.includes(item.id)
             }
-            setLoading={setLoading}
             toggleSelection={toggleSelection}
             handleGroupBooks={groupSelectedBooks}
-            handleBookUpload={undefined}
-            handleBookDownload={undefined}
-            handleBookDelete={handleBookDelete}
             handleSetSelectMode={handleSetSelectMode}
             handleShowDetailsBook={handleShowDetailsBook}
             handleLibraryNavigation={handleLibraryNavigation}
             handleUpdateReadingStatus={handleUpdateReadingStatus}
-            transferProgress={null}
           />
         ))}
         {viewMode === 'grid' && currentBookshelfItems.length > 0 && (

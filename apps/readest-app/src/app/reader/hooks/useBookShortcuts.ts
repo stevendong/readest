@@ -1,12 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useReaderStore } from '@/store/readerStore';
 import { useNotebookStore } from '@/store/notebookStore';
-import { isTauriAppPlatform } from '@/services/environment';
 import { useSidebarStore } from '@/store/sidebarStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useBookDataStore } from '@/store/bookDataStore';
 import { useCommandPalette } from '@/components/command-palette';
-import { tauriHandleClose, tauriHandleToggleFullScreen, tauriQuitApp } from '@/utils/window';
 import { eventDispatcher } from '@/utils/event';
 import { setShortcutsDialogVisible } from '@/components/KeyboardShortcutsHelp';
 import { MAX_ZOOM_LEVEL, MIN_ZOOM_LEVEL, ZOOM_STEP } from '@/services/constants';
@@ -181,23 +179,16 @@ const useBookShortcuts = ({ sideBarBookKey, bookKeys }: UseBookShortcutsProps) =
   };
 
   const toggleFullscreen = async () => {
-    if (isTauriAppPlatform()) {
-      await tauriHandleToggleFullScreen();
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await document.documentElement.requestFullscreen();
     }
   };
 
-  const closeWindow = async () => {
-    if (isTauriAppPlatform()) {
-      await tauriHandleClose();
-    }
-  };
-
-  const quitApp = async () => {
-    // on web platform use browser's default shortcut to close the tab
-    if (isTauriAppPlatform()) {
-      await tauriQuitApp();
-    }
-  };
+  // Browser handles Cmd+W/Q natively; no-ops for web
+  const closeWindow = async () => {};
+  const quitApp = async () => {};
 
   const showSearchBar = () => {
     setTimeout(() => {
