@@ -1,4 +1,3 @@
-import withSerwistInit from '@serwist/next';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 
 const isDev = process.env['NODE_ENV'] === 'development';
@@ -31,24 +30,15 @@ const nextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       nunjucks: 'nunjucks/browser/nunjucks.js',
-      ...(appPlatform !== 'web' ? { '@tursodatabase/database-wasm': false } : {}),
     };
     return config;
   },
   turbopack: {
     resolveAlias: {
       nunjucks: 'nunjucks/browser/nunjucks.js',
-      ...(appPlatform !== 'web' ? { '@tursodatabase/database-wasm': './src/utils/stub.ts' } : {}),
     },
   },
   transpilePackages: [
-    'ai',
-    'ai-sdk-ollama',
-    '@ai-sdk/react',
-    '@assistant-ui/react',
-    '@assistant-ui/react-ai-sdk',
-    '@assistant-ui/react-markdown',
-    'streamdown',
     ...(isDev
       ? []
       : [
@@ -95,22 +85,8 @@ const nextConfig = {
   },
 };
 
-const pwaDisabled = isDev || appPlatform !== 'web';
-
-const withPWA = pwaDisabled
-  ? (config) => config
-  : withSerwistInit({
-      swSrc: 'src/sw.ts',
-      swDest: 'public/sw.js',
-      cacheOnNavigation: true,
-      reloadOnOnline: true,
-      disable: false,
-      register: true,
-      scope: '/',
-    });
-
 const withAnalyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
 
-export default withPWA(withAnalyzer(nextConfig));
+export default withAnalyzer(nextConfig);

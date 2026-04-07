@@ -22,7 +22,6 @@ import { CustomTextureInfo } from '@/styles/textures';
 import { CustomFont, CustomFontInfo } from '@/styles/fonts';
 
 import * as BookSvc from './bookService';
-import * as CloudSvc from './cloudService';
 import * as FontSvc from './fontService';
 import * as ImageSvc from './imageService';
 import * as LibrarySvc from './libraryService';
@@ -239,56 +238,53 @@ export abstract class BaseAppService implements AppService {
   }
 
   async deleteBook(book: Book, deleteAction: DeleteAction): Promise<void> {
-    return CloudSvc.deleteBook(this.fs, book, deleteAction);
+    // Local-only delete: remove book files from filesystem
+    if (deleteAction === 'local' || deleteAction === 'both') {
+      const bookDir = book.hash;
+      try {
+        if (await this.fs.exists(bookDir, 'Books')) {
+          await this.fs.removeDir(bookDir, 'Books', true);
+        }
+      } catch (error) {
+        console.error('Failed to delete local book files:', error);
+      }
+    }
   }
 
   async uploadFileToCloud(
-    lfp: string,
-    cfp: string,
-    base: BaseDir,
-    handleProgress: ProgressHandler,
-    hash: string,
-    temp: boolean = false,
-  ) {
-    return CloudSvc.uploadFileToCloud(
-      this.fs,
-      this.resolveFilePath.bind(this),
-      lfp,
-      cfp,
-      base,
-      handleProgress,
-      hash,
-      temp,
-    );
+    _lfp: string,
+    _cfp: string,
+    _base: BaseDir,
+    _handleProgress: ProgressHandler,
+    _hash: string,
+    _temp: boolean = false,
+  ): Promise<string | undefined> {
+    // Cloud functionality removed
+    throw new Error('Cloud upload not available');
   }
 
-  async uploadBook(book: Book, onProgress?: ProgressHandler): Promise<void> {
-    return CloudSvc.uploadBook(this.fs, this.resolveFilePath.bind(this), book, onProgress);
+  async uploadBook(_book: Book, _onProgress?: ProgressHandler): Promise<void> {
+    // Cloud functionality removed
+    throw new Error('Cloud upload not available');
   }
 
-  async downloadCloudFile(lfp: string, cfp: string, onProgress: ProgressHandler) {
-    return CloudSvc.downloadCloudFile(this, this.localBooksDir, lfp, cfp, onProgress);
+  async downloadCloudFile(_lfp: string, _cfp: string, _onProgress: ProgressHandler) {
+    // Cloud functionality removed
+    throw new Error('Cloud download not available');
   }
 
-  async downloadBookCovers(books: Book[]): Promise<void> {
-    return CloudSvc.downloadBookCovers(this, this.fs, this.localBooksDir, books);
+  async downloadBookCovers(_books: Book[]): Promise<void> {
+    // Cloud functionality removed
   }
 
   async downloadBook(
-    book: Book,
-    onlyCover = false,
-    redownload = false,
-    onProgress?: ProgressHandler,
+    _book: Book,
+    _onlyCover = false,
+    _redownload = false,
+    _onProgress?: ProgressHandler,
   ): Promise<void> {
-    return CloudSvc.downloadBook(
-      this,
-      this.fs,
-      this.localBooksDir,
-      book,
-      onlyCover,
-      redownload,
-      onProgress,
-    );
+    // Cloud functionality removed
+    throw new Error('Cloud download not available');
   }
 
   async exportBook(book: Book): Promise<boolean> {

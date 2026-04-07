@@ -15,7 +15,6 @@ import { useNotebookStore } from '@/store/notebookStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useDeviceControlStore } from '@/store/deviceStore';
 import { useScreenWakeLock } from '@/hooks/useScreenWakeLock';
-import { useTransferQueue } from '@/hooks/useTransferQueue';
 import { eventDispatcher } from '@/utils/event';
 import { interceptWindowOpen } from '@/utils/open';
 import { mountAdditionalFonts } from '@/styles/fonts';
@@ -23,7 +22,6 @@ import { isTauriAppPlatform } from '@/services/environment';
 import { getSysFontsList, setSystemUIVisibility } from '@/utils/bridge';
 import { AboutWindow } from '@/components/AboutWindow';
 import { KeyboardShortcutsHelp } from '@/components/KeyboardShortcutsHelp';
-import { UpdaterWindow } from '@/components/UpdaterWindow';
 import { KOSyncSettingsWindow } from './KOSyncSettings';
 import { ReadwiseSettingsWindow } from './ReadwiseSettings';
 import { HardcoverSettingsWindow } from './HardcoverSettings';
@@ -72,7 +70,6 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
 
   useTheme({ systemUIVisible: settings.alwaysShowStatusBar, appThemeColor: 'base-100' });
   useScreenWakeLock(settings.screenWakeLock);
-  useTransferQueue(libraryLoaded, 5000);
 
   useEffect(() => {
     mountAdditionalFonts(document);
@@ -171,7 +168,6 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
         <ReaderContent ids={ids} settings={settings} />
         <AboutWindow />
         <KeyboardShortcutsHelp />
-        <UpdaterWindow />
         <KOSyncSettingsWindow />
         <ReadwiseSettingsWindow />
         <HardcoverSettingsWindow />

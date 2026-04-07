@@ -6,7 +6,6 @@ import { useBookDataStore } from '@/store/bookDataStore';
 import { useReaderStore } from '@/store/readerStore';
 import { useSidebarStore } from '@/store/sidebarStore';
 import { useNotebookStore } from '@/store/notebookStore';
-import { useAIChatStore } from '@/store/aiChatStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useThemeStore } from '@/store/themeStore';
 import { useEnv } from '@/context/EnvContext';
@@ -22,7 +21,6 @@ import { saveSysSettings } from '@/helpers/settings';
 import { NOTE_PREFIX } from '@/types/view';
 import useShortcuts from '@/hooks/useShortcuts';
 import BooknoteItem from '../sidebar/BooknoteItem';
-import AIAssistant from './AIAssistant';
 import NotebookHeader from './Header';
 import NoteEditor from './NoteEditor';
 import SearchBar from './SearchBar';
@@ -46,7 +44,6 @@ const Notebook: React.FC = ({}) => {
     useNotebookStore();
   const { setNotebookNewAnnotation, setNotebookEditAnnotation, setNotebookActiveTab } =
     useNotebookStore();
-  const { activeConversationId } = useAIChatStore();
 
   const [isSearchBarVisible, setIsSearchBarVisible] = useState(false);
   const [searchResults, setSearchResults] = useState<BookNote[] | null>(null);
@@ -335,95 +332,89 @@ const Notebook: React.FC = ({}) => {
             </div>
           )}
         </div>
-        {notebookActiveTab === 'ai' ? (
-          <div className='flex min-h-0 flex-1 flex-col'>
-            <AIAssistant key={activeConversationId ?? 'new'} bookKey={sideBarBookKey} />
-          </div>
-        ) : (
-          <div className='flex-grow overflow-y-auto px-3'>
-            {isSearchBarVisible && searchResults && !hasSearchResults && hasAnyNotes && (
-              <div className='flex h-32 items-center justify-center text-gray-500'>
-                <p className='font-size-sm text-center'>{_('No notes match your search')}</p>
-              </div>
-            )}
-            <div dir='ltr'>
-              {filteredExcerptNotes.length > 0 && (
-                <p className='content font-size-base'>
-                  {_('Excerpts')}
-                  {isSearchBarVisible && searchResults && (
-                    <span className='font-size-xs ml-2 text-gray-500'>
-                      ({filteredExcerptNotes.length})
-                    </span>
-                  )}
-                </p>
-              )}
+        <div className='flex-grow overflow-y-auto px-3'>
+          {isSearchBarVisible && searchResults && !hasSearchResults && hasAnyNotes && (
+            <div className='flex h-32 items-center justify-center text-gray-500'>
+              <p className='font-size-sm text-center'>{_('No notes match your search')}</p>
             </div>
-            <ul className=''>
-              {filteredExcerptNotes.map((item, index) => (
-                <li key={`${index}-${item.id}`} className='my-2'>
+          )}
+          <div dir='ltr'>
+            {filteredExcerptNotes.length > 0 && (
+              <p className='content font-size-base'>
+                {_('Excerpts')}
+                {isSearchBarVisible && searchResults && (
+                  <span className='font-size-xs ml-2 text-gray-500'>
+                    ({filteredExcerptNotes.length})
+                  </span>
+                )}
+              </p>
+            )}
+          </div>
+          <ul className=''>
+            {filteredExcerptNotes.map((item, index) => (
+              <li key={`${index}-${item.id}`} className='my-2'>
+                <div
+                  role='button'
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Backspace' || e.key === 'Delete') {
+                      handleEditNote(item, true);
+                    }
+                  }}
+                  className='booknote-item collapse-arrow border-base-300 bg-base-100 collapse border'
+                >
                   <div
-                    role='button'
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Backspace' || e.key === 'Delete') {
-                        handleEditNote(item, true);
-                      }
-                    }}
-                    className='booknote-item collapse-arrow border-base-300 bg-base-100 collapse border'
+                    className={clsx(
+                      'collapse-title pe-8 text-sm font-medium',
+                      'h-[2.5rem] min-h-[2.5rem] p-[0.6rem]',
+                    )}
+                    style={
+                      {
+                        '--top-override': '1.25rem',
+                        '--end-override': '0.7rem',
+                      } as React.CSSProperties
+                    }
                   >
-                    <div
-                      className={clsx(
-                        'collapse-title pe-8 text-sm font-medium',
-                        'h-[2.5rem] min-h-[2.5rem] p-[0.6rem]',
-                      )}
-                      style={
-                        {
-                          '--top-override': '1.25rem',
-                          '--end-override': '0.7rem',
-                        } as React.CSSProperties
-                      }
-                    >
-                      <p className='line-clamp-1'>{item.text || `Excerpt ${index + 1}`}</p>
-                    </div>
-                    <div className='collapse-content font-size-xs select-text px-3 pb-0'>
-                      <p className='hyphens-auto text-justify'>{item.text}</p>
-                      <div className='flex justify-end' dir='ltr'>
-                        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions*/}
-                        <div
-                          className='font-size-xs cursor-pointer align-bottom text-red-500 hover:text-red-600'
-                          onClick={handleEditNote.bind(null, item, true)}
-                          aria-label={_('Delete')}
-                        >
-                          {_('Delete')}
-                        </div>
+                    <p className='line-clamp-1'>{item.text || `Excerpt ${index + 1}`}</p>
+                  </div>
+                  <div className='collapse-content font-size-xs select-text px-3 pb-0'>
+                    <p className='hyphens-auto text-justify'>{item.text}</p>
+                    <div className='flex justify-end' dir='ltr'>
+                      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions*/}
+                      <div
+                        className='font-size-xs cursor-pointer align-bottom text-red-500 hover:text-red-600'
+                        onClick={handleEditNote.bind(null, item, true)}
+                        aria-label={_('Delete')}
+                      >
+                        {_('Delete')}
                       </div>
                     </div>
                   </div>
-                </li>
-              ))}
-            </ul>
-            <div dir='ltr'>
-              {(notebookNewAnnotation || filteredAnnotationNotes.length > 0) && (
-                <p className='content font-size-base'>
-                  {_('Notes')}
-                  {isSearchBarVisible && searchResults && filteredAnnotationNotes.length > 0 && (
-                    <span className='font-size-xs ml-2 text-gray-500'>
-                      ({filteredAnnotationNotes.length})
-                    </span>
-                  )}
-                </p>
-              )}
-            </div>
-            {(notebookNewAnnotation || notebookEditAnnotation) && !isSearchBarVisible && (
-              <NoteEditor onSave={handleSaveNote} onEdit={(item) => handleEditNote(item, false)} />
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div dir='ltr'>
+            {(notebookNewAnnotation || filteredAnnotationNotes.length > 0) && (
+              <p className='content font-size-base'>
+                {_('Notes')}
+                {isSearchBarVisible && searchResults && filteredAnnotationNotes.length > 0 && (
+                  <span className='font-size-xs ml-2 text-gray-500'>
+                    ({filteredAnnotationNotes.length})
+                  </span>
+                )}
+              </p>
             )}
-            <ul>
-              {filteredAnnotationNotes.map((item, index) => (
-                <BooknoteItem key={`${index}-${item.cfi}`} bookKey={sideBarBookKey} item={item} />
-              ))}
-            </ul>
           </div>
-        )}
+          {(notebookNewAnnotation || notebookEditAnnotation) && !isSearchBarVisible && (
+            <NoteEditor onSave={handleSaveNote} onEdit={(item) => handleEditNote(item, false)} />
+          )}
+          <ul>
+            {filteredAnnotationNotes.map((item, index) => (
+              <BooknoteItem key={`${index}-${item.cfi}`} bookKey={sideBarBookKey} item={item} />
+            ))}
+          </ul>
+        </div>
         <div
           className='flex-shrink-0'
           style={{

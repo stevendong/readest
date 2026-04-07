@@ -1,62 +1,21 @@
-import { AwsClient } from 'aws4fetch';
-
+// Stub: R2 storage removed in Phase 1 trimming
 export const r2Storage = {
-  getR2Client: () => {
-    return new AwsClient({
-      service: 's3',
-      region: process.env['R2_REGION'] || 'auto',
-      accessKeyId: process.env['R2_ACCESS_KEY_ID']!,
-      secretAccessKey: process.env['R2_SECRET_ACCESS_KEY']!,
-    });
+  getDownloadSignedUrl: async (
+    _bucket: string,
+    _key: string,
+    _expires: number,
+  ): Promise<string> => {
+    throw new Error('R2 not available');
   },
-
-  getR2Url: () => {
-    const R2_ACCOUNT_ID = process.env['R2_ACCOUNT_ID']!;
-    return `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
-  },
-
-  getDownloadSignedUrl: async (bucketName: string, fileKey: string, expiresIn: number) => {
-    return (
-      await r2Storage
-        .getR2Client()
-        .sign(
-          new Request(
-            `${r2Storage.getR2Url()}/${bucketName}/${fileKey}?X-Amz-Expires=${expiresIn}`,
-          ),
-          {
-            aws: { signQuery: true },
-          },
-        )
-    ).url.toString();
-  },
-
   getUploadSignedUrl: async (
-    bucketName: string,
-    fileKey: string,
-    contentLength: number,
-    expiresIn: number,
-  ) => {
-    return (
-      await r2Storage.getR2Client().sign(
-        new Request(
-          `${r2Storage.getR2Url()}/${bucketName}/${fileKey}?X-Amz-Expires=${expiresIn}&X-Amz-SignedHeaders=content-length`,
-          {
-            method: 'PUT',
-            headers: {
-              'Content-Length': contentLength.toString(),
-            },
-          },
-        ),
-        {
-          aws: { signQuery: true },
-        },
-      )
-    ).url.toString();
+    _bucket: string,
+    _key: string,
+    _length: number,
+    _expires: number,
+  ): Promise<string> => {
+    throw new Error('R2 not available');
   },
-
-  deleteObject: async (bucketName: string, fileKey: string) => {
-    return await r2Storage.getR2Client().fetch(`${r2Storage.getR2Url()}/${bucketName}/${fileKey}`, {
-      method: 'DELETE',
-    });
+  deleteObject: async (_bucket: string, _key: string): Promise<void> => {
+    throw new Error('R2 not available');
   },
 };

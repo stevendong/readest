@@ -3,7 +3,6 @@ import { CustomFont } from '@/styles/fonts';
 import { CustomTexture } from '@/styles/textures';
 import { HighlightColor, HighlightStyle, ViewSettings } from './book';
 import { OPDSCatalog } from './opds';
-import type { AISettings } from '@/services/ai/types';
 import type { NotebookTab } from '@/store/notebookStore';
 
 export type ThemeType = 'light' | 'dark' | 'auto';
@@ -122,7 +121,7 @@ export interface SystemSettings {
 
   migrationVersion: number;
 
-  aiSettings: AISettings;
+  aiSettings: Record<string, unknown>;
   globalReadSettings: ReadSettings;
   globalViewSettings: ViewSettings;
 }

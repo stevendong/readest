@@ -5,11 +5,8 @@
   "scripts": {
     "test": "pnpm --filter @readest/readest-app test",
     "lint": "pnpm --filter @readest/readest-app lint",
-    "tauri": "pnpm --filter @readest/readest-app tauri",
     "dev-web": "pnpm --filter @readest/readest-app dev-web",
     "prepare": "husky",
-    "fmt:check": "pnpm --filter @readest/readest-app fmt:check",
-    "clippy:check": "pnpm --filter @readest/readest-app clippy:check",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,css,json,md,html,yml}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,css,json,md,html,yml}\""
   },
@@ -46,12 +43,10 @@
       "lodash-es": ">=4.17.23",
       "@babel/runtime": ">=7.26.10",
       "@babel/helpers": ">=7.26.10",
-      "mdast-util-gfm-autolink-literal": "2.0.1",
-      "@ai-sdk/provider-utils": "4.0.8"
+      "mdast-util-gfm-autolink-literal": "2.0.1"
     },
     "patchedDependencies": {
-      "mdast-util-gfm-autolink-literal@2.0.1": "patches/mdast-util-gfm-autolink-literal@2.0.1.patch",
-      "@ai-sdk/provider-utils@4.0.8": "patches/@ai-sdk__provider-utils@4.0.8.patch"
+      "mdast-util-gfm-autolink-literal@2.0.1": "patches/mdast-util-gfm-autolink-literal@2.0.1.patch"
     }
   }
 }

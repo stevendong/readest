@@ -16,7 +16,7 @@ const TabNavigation: React.FC<{
   const _ = useTranslation();
   const { appService } = useEnv();
   const { settings } = useSettingsStore();
-  const aiEnabled = settings?.aiSettings?.enabled ?? false;
+  const aiEnabled = settings?.aiSettings?.['enabled'] ?? false;
 
   const tabs = ['toc', 'annotations', 'bookmarks', ...(aiEnabled ? ['history'] : [])];
 

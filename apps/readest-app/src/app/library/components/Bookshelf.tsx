@@ -46,17 +46,10 @@ interface BookshelfProps {
   isSelectAll: boolean;
   isSelectNone: boolean;
   handleImportBooks: () => void;
-  handleBookDownload: (
-    book: Book,
-    options?: { redownload?: boolean; queued?: boolean },
-  ) => Promise<boolean>;
-  handleBookUpload: (book: Book, syncBooks?: boolean) => Promise<boolean>;
-  handleBookDelete: (book: Book, syncBooks?: boolean) => Promise<boolean>;
+  handleBookDelete: (book: Book) => Promise<boolean>;
   handleSetSelectMode: (selectMode: boolean) => void;
   handleShowDetailsBook: (book: Book) => void;
   handleLibraryNavigation: (targetGroup: string) => void;
-  handlePushLibrary: () => Promise<void>;
-  booksTransferProgress: { [key: string]: number | null };
 }
 
 const Bookshelf: React.FC<BookshelfProps> = ({
@@ -65,14 +58,10 @@ const Bookshelf: React.FC<BookshelfProps> = ({
   isSelectAll,
   isSelectNone,
   handleImportBooks,
-  handleBookUpload,
-  handleBookDownload,
   handleBookDelete,
   handleSetSelectMode,
   handleShowDetailsBook,
   handleLibraryNavigation,
-  handlePushLibrary,
-  booksTransferProgress,
 }) => {
   const _ = useTranslation();
   const router = useRouter();
@@ -310,9 +299,8 @@ const Bookshelf: React.FC<BookshelfProps> = ({
         break;
       }
       const batch = books.slice(i, i + concurrency);
-      await Promise.all(batch.map((book) => handleBookDelete(book, false)));
+      await Promise.all(batch.map((book) => handleBookDelete(book)));
     }
-    handlePushLibrary();
     setSelectedBooks([]);
     setShowDeleteAlert(false);
     setShowSelectModeActions(true);
@@ -428,16 +416,14 @@ const Bookshelf: React.FC<BookshelfProps> = ({
             setLoading={setLoading}
             toggleSelection={toggleSelection}
             handleGroupBooks={groupSelectedBooks}
-            handleBookUpload={handleBookUpload}
-            handleBookDownload={handleBookDownload}
+            handleBookUpload={undefined}
+            handleBookDownload={undefined}
             handleBookDelete={handleBookDelete}
             handleSetSelectMode={handleSetSelectMode}
             handleShowDetailsBook={handleShowDetailsBook}
             handleLibraryNavigation={handleLibraryNavigation}
             handleUpdateReadingStatus={handleUpdateReadingStatus}
-            transferProgress={
-              'hash' in item ? booksTransferProgress[(item as Book).hash] || null : null
-            }
+            transferProgress={null}
           />
         ))}
         {viewMode === 'grid' && currentBookshelfItems.length > 0 && (

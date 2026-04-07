@@ -91,11 +91,11 @@ interface BookshelfItemProps {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   toggleSelection: (hash: string) => void;
   handleGroupBooks: () => void;
-  handleBookDownload: (
+  handleBookDownload?: (
     book: Book,
     options?: { redownload?: boolean; queued?: boolean },
   ) => Promise<boolean>;
-  handleBookUpload: (book: Book, syncBooks?: boolean) => Promise<boolean>;
+  handleBookUpload?: (book: Book, syncBooks?: boolean) => Promise<boolean>;
   handleBookDelete: (book: Book, syncBooks?: boolean) => Promise<boolean>;
   handleSetSelectMode: (selectMode: boolean) => void;
   handleShowDetailsBook: (book: Book) => void;
@@ -144,7 +144,7 @@ const BookshelfItem: React.FC<BookshelfItemProps> = ({
       let available = false;
       const loadingTimeout = setTimeout(() => setLoading(true), 200);
       try {
-        available = await handleBookDownload(book, { queued: false });
+        available = handleBookDownload ? await handleBookDownload(book, { queued: false }) : false;
         await updateBook(envConfig, book);
       } finally {
         if (loadingTimeout) clearTimeout(loadingTimeout);
@@ -243,13 +243,13 @@ const BookshelfItem: React.FC<BookshelfItemProps> = ({
     const downloadBookMenuItem = await MenuItem.new({
       text: _('Download Book'),
       action: async () => {
-        handleBookDownload(book, { queued: true });
+        handleBookDownload?.(book, { queued: true });
       },
     });
     const uploadBookMenuItem = await MenuItem.new({
       text: _('Upload Book'),
       action: async () => {
-        handleBookUpload(book);
+        handleBookUpload?.(book);
       },
     });
     const deleteBookMenuItem = await MenuItem.new({

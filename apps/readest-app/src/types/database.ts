@@ -1,4 +1,10 @@
-export type { DatabaseOpts } from '@tursodatabase/database-common';
+// Stub: previously from @tursodatabase/database-common
+export interface DatabaseOpts {
+  authToken?: string;
+  encryptionKey?: string;
+  syncUrl?: string;
+  syncInterval?: number;
+}
 
 export interface DatabaseExecResult {
   rowsAffected: number;
