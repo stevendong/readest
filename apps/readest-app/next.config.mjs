@@ -1,5 +1,8 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isDev = process.env['NODE_ENV'] === 'development';
 const appPlatform = process.env['NEXT_PUBLIC_APP_PLATFORM'];
 
@@ -30,12 +33,16 @@ const nextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       nunjucks: 'nunjucks/browser/nunjucks.js',
+      '@pdfjs': path.resolve(__dirname, 'public/vendor/pdfjs'),
+      '@simplecc': path.resolve(__dirname, 'public/vendor/simplecc'),
     };
     return config;
   },
   turbopack: {
     resolveAlias: {
       nunjucks: 'nunjucks/browser/nunjucks.js',
+      '@pdfjs/*': './public/vendor/pdfjs/*',
+      '@simplecc/*': './public/vendor/simplecc/*',
     },
   },
   transpilePackages: [
