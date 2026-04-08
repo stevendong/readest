@@ -15,8 +15,8 @@ import { getImportErrorMessage } from '@/services/errors';
 import { eventDispatcher } from '@/utils/event';
 import { getDirPath, getFilename } from '@/utils/path';
 import { isWebAppPlatform } from '@/services/environment';
-import { fetchTasks, Pdf2EpubAuthError } from '@/services/pdf2epubApi';
-import { tasksToBooks } from '@/utils/taskToBook';
+import { syncPdf2EpubBooks } from '@/services/pdf2epubSync';
+import { Pdf2EpubAuthError } from '@/services/pdf2epubApi';
 
 import { useEnv } from '@/context/EnvContext';
 import { useAuth } from '@/context/AuthContext';
@@ -227,24 +227,13 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
       const settings = await appService.loadSettings();
       setSettings(settings);
 
-      // Load library: try pdf2epub API first, fall back to local storage
+      // Load library: always load local storage first, then sync pdf2epub in background
       let library: Book[];
       if (libraryBooks.length > 0) {
         // Reuse the library from the store when we return from the reader
         library = libraryBooks;
       } else {
-        try {
-          const response = await fetchTasks(1, 100, 'completed');
-          library = tasksToBooks(response.items);
-        } catch (err) {
-          if (err instanceof Pdf2EpubAuthError) {
-            // Not logged in — this is expected, not an error
-            console.log('No pdf2epub session, loading local library');
-          } else {
-            console.warn('Failed to load books from pdf2epub API:', err);
-          }
-          library = await appService.loadLibraryBooks();
-        }
+        library = await appService.loadLibraryBooks();
       }
 
       let opened = false;
@@ -257,6 +246,23 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
       setLibraryLoaded(true);
       if (loadingTimeout) clearTimeout(loadingTimeout);
       setLoading(false);
+
+      // Background sync: add new pdf2epub books incrementally
+      try {
+        const newBooks = await syncPdf2EpubBooks(library);
+        if (newBooks.length > 0) {
+          const merged = [...library, ...newBooks];
+          setLibrary(merged);
+          await appService.saveLibraryBooks(merged);
+        }
+      } catch (err) {
+        if (err instanceof Pdf2EpubAuthError) {
+          // Not logged in — expected, not an error
+          console.log('No pdf2epub session, skipping sync');
+        } else {
+          console.warn('pdf2epub sync failed:', err);
+        }
+      }
     };
 
     initLibrary();

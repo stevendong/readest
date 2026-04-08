@@ -45,6 +45,8 @@ export interface Book {
   groupName?: string;
   tags?: string[];
   coverImageUrl?: string | null;
+  // Book source: 'local' for locally imported, 'pdf2epub' for synced from pdf2epub
+  source?: 'local' | 'pdf2epub';
 
   createdAt: number;
   updatedAt: number;

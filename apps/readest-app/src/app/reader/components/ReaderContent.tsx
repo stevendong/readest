@@ -71,10 +71,12 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
         try {
           const task = await fetchTask(taskId);
           const book = taskToBook(task);
-          // Add to library if not already present
+          // Add to library if not already present, and persist to local storage
           const existingBooks = useLibraryStore.getState().library;
           if (!existingBooks.find((b) => b.hash === book.hash)) {
-            setLibrary([...existingBooks, book]);
+            const merged = [...existingBooks, book];
+            setLibrary(merged);
+            await appService?.saveLibraryBooks(merged);
           }
           bookIds = book.hash;
         } catch (err) {

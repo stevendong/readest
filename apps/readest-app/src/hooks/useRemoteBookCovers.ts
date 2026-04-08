@@ -63,6 +63,30 @@ async function setCachedCover(hash: string, blob: Blob): Promise<void> {
 // --- Cover extraction ---
 
 /**
+ * Check if a book is a remote pdf2epub book.
+ * Supports both new books (with `source` field) and legacy persisted books
+ * that were saved before the `source` field was introduced.
+ */
+function isRemoteBook(book: Book): boolean {
+  return book.source === 'pdf2epub' || (!book.source && !book.filePath && !book.url);
+}
+
+/**
+ * Check if a cover URL is a valid, live blob URL.
+ * Blob URLs from previous page navigations become invalid.
+ */
+function hasValidCover(book: Book): boolean {
+  const coverUrl = book.coverImageUrl || book.metadata?.coverImageUrl;
+  if (!coverUrl) return false;
+  // blob: URLs from previous navigations are invalidated
+  // http/https URLs (e.g. from metadata) are always valid
+  if (coverUrl.startsWith('blob:')) return true;
+  if (coverUrl.startsWith('http://') || coverUrl.startsWith('https://')) return true;
+  // Local file-based cover paths (e.g. "cover.png") are not valid for remote books
+  return false;
+}
+
+/**
  * Load cover for a book: try IndexedDB cache first, then fetch EPUB and extract.
  * Returns a blob URL for the cover image, or null if extraction fails.
  */
@@ -109,25 +133,21 @@ function updateBookCover(bookHash: string, coverUrl: string) {
 }
 
 /**
- * For each remote book without a cover, load from cache or fetch EPUB and extract.
+ * For each remote book without a valid cover, load from IndexedDB cache or fetch EPUB and extract.
  * Updates the library store with cover blob URLs as they become available.
  */
 export function useRemoteBookCovers(books: Book[]) {
   const loadedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    const remoteBooksWithoutCover = books.filter(
-      (book) =>
-        !book.coverImageUrl &&
-        !book.metadata?.coverImageUrl &&
-        !book.filePath &&
-        !loadedRef.current.has(book.hash),
+    const remoteBooksNeedingCover = books.filter(
+      (book) => isRemoteBook(book) && !hasValidCover(book) && !loadedRef.current.has(book.hash),
     );
 
-    if (remoteBooksWithoutCover.length === 0) return;
+    if (remoteBooksNeedingCover.length === 0) return;
 
     // Mark as loading to avoid duplicate requests
-    for (const book of remoteBooksWithoutCover) {
+    for (const book of remoteBooksNeedingCover) {
       loadedRef.current.add(book.hash);
     }
 
@@ -136,8 +156,8 @@ export function useRemoteBookCovers(books: Book[]) {
     let index = 0;
 
     const processNext = async () => {
-      while (index < remoteBooksWithoutCover.length) {
-        const book = remoteBooksWithoutCover[index++]!;
+      while (index < remoteBooksNeedingCover.length) {
+        const book = remoteBooksNeedingCover[index++]!;
         const coverUrl = await loadCover(book.hash);
         if (coverUrl) {
           updateBookCover(book.hash, coverUrl);
@@ -146,7 +166,7 @@ export function useRemoteBookCovers(books: Book[]) {
     };
 
     const workers = Array.from(
-      { length: Math.min(CONCURRENCY, remoteBooksWithoutCover.length) },
+      { length: Math.min(CONCURRENCY, remoteBooksNeedingCover.length) },
       () => processNext(),
     );
     Promise.all(workers).catch(console.warn);

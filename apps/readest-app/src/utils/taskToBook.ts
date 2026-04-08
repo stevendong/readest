@@ -41,6 +41,7 @@ export function taskToBook(task: Pdf2EpubTask): Book {
     author,
     primaryLanguage: language || undefined,
     coverImageUrl,
+    source: 'pdf2epub',
     createdAt: new Date(task.created_at).getTime(),
     updatedAt: task.completed_at
       ? new Date(task.completed_at).getTime()

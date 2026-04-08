@@ -167,17 +167,21 @@ export const useReaderStore = create<ReaderStore>((set, get) => ({
       let bookDoc = bookData?.bookDoc;
       let file = bookData?.file;
       if (!bookDoc || !file || reload) {
-        // For pdf2epub remote books without a local file or URL, fetch the presigned EPUB URL
-        if (!book.url && !book.filePath) {
+        // For pdf2epub remote books, fetch the presigned EPUB URL.
+        // Use a shallow copy so the temporary presigned URL doesn't leak into the
+        // library store (which would break isRemoteBook checks for cover loading).
+        // Support both new books (source === 'pdf2epub') and legacy books without source field.
+        let bookForLoad = book;
+        if ((book.source === 'pdf2epub' || !book.source) && !book.url && !book.filePath) {
           try {
             const { hashToTaskId } = await import('@/utils/taskToBook');
             const epubUrl = await getEpubUrl(hashToTaskId(book.hash));
-            book.url = epubUrl;
+            bookForLoad = { ...book, url: epubUrl };
           } catch (err) {
             console.warn('Failed to get EPUB URL from pdf2epub, trying local:', err);
           }
         }
-        const content = (await appService.loadBookContent(book)) as BookContent;
+        const content = (await appService.loadBookContent(bookForLoad)) as BookContent;
         file = content.file;
         console.log('Loading book', key);
         const doc = await new DocumentLoader(file).open();
