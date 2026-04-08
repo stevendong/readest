@@ -8,20 +8,25 @@ import type {
   Pdf2EpubDownloadUrlResponse,
 } from './pdf2epubTypes';
 
-const API_BASE_URL = process.env['NEXT_PUBLIC_PDF2EPUB_API_URL'] || '';
+const isDev = process.env['NODE_ENV'] === 'development';
+// In development, use Next.js rewrite proxy to avoid CORS issues
+const API_BASE_URL = isDev ? '' : process.env['NEXT_PUBLIC_PDF2EPUB_API_URL'] || '';
 
 async function getAccessToken(): Promise<string | null> {
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token ?? null;
 }
 
+// In development, requests go through Next.js rewrite proxy: /pdf2epub-api/* → backend /api/*
+const API_PATH_PREFIX = isDev ? '/pdf2epub-api' : `${API_BASE_URL}/api`;
+
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const token = await getAccessToken();
   if (!token) {
-    throw new Pdf2EpubAuthError('Not authenticated. Please sign in at pdf2epub.com');
+    throw new Pdf2EpubAuthError('Not authenticated. Please sign in at pdf2epub.ai');
   }
 
-  const url = `${API_BASE_URL}${path}`;
+  const url = `${API_PATH_PREFIX}${path}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`,
@@ -36,7 +41,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   if (response.status === 401) {
     // Clear session on 401
     await supabase.auth.signOut();
-    throw new Pdf2EpubAuthError('Session expired. Please sign in again at pdf2epub.com');
+    throw new Pdf2EpubAuthError('Session expired. Please sign in again at pdf2epub.ai');
   }
 
   if (!response.ok) {
@@ -60,23 +65,23 @@ export async function fetchTasks(
   if (status !== 'all') {
     params.set('status', status);
   }
-  return apiFetch<Pdf2EpubTaskListResponse>(`/api/tasks?${params.toString()}`);
+  return apiFetch<Pdf2EpubTaskListResponse>(`/tasks?${params.toString()}`);
 }
 
 /** Fetch a single task by ID */
 export async function fetchTask(taskId: string): Promise<Pdf2EpubTask> {
-  return apiFetch<Pdf2EpubTask>(`/api/tasks/${taskId}`);
+  return apiFetch<Pdf2EpubTask>(`/tasks/${taskId}`);
 }
 
 /** Get a presigned URL for the EPUB file of a task */
 export async function getEpubUrl(taskId: string): Promise<string> {
-  const data = await apiFetch<Pdf2EpubEpubUrlResponse>(`/api/tasks/${taskId}/reader/epub`);
+  const data = await apiFetch<Pdf2EpubEpubUrlResponse>(`/tasks/${taskId}/reader/epub`);
   return data.url;
 }
 
 /** Get a download URL for the original file of a task */
 export async function getDownloadUrl(taskId: string): Promise<string> {
-  const data = await apiFetch<Pdf2EpubDownloadUrlResponse>(`/api/tasks/${taskId}/download`);
+  const data = await apiFetch<Pdf2EpubDownloadUrlResponse>(`/tasks/${taskId}/download`);
   return data.url;
 }
 

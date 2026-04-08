@@ -14,20 +14,32 @@ export type Pdf2EpubTaskStatus = 'pending' | 'processing' | 'completed' | 'faile
 export interface Pdf2EpubTask {
   id: string;
   user_id: string;
+  user_email?: string;
   filename: string;
   status: Pdf2EpubTaskStatus;
+  progress?: number;
+  current_step?: string;
+  total_pages?: number;
+  processed_pages?: number;
+  max_pages?: number | null;
+  quality_mode?: string;
+  is_pro_mode?: boolean;
+  pro_stage?: string | null;
   book_metadata?: Pdf2EpubBookMetadata;
   created_at: string;
-  updated_at?: string;
-  completed_at?: string;
-  error_message?: string;
+  updated_at?: string | null;
+  completed_at?: string | null;
+  error_message?: string | null;
+  deleted_at?: string | null;
+  download_url?: string;
 }
 
 export interface Pdf2EpubTaskListResponse {
-  tasks: Pdf2EpubTask[];
+  items: Pdf2EpubTask[];
   total: number;
   page: number;
   size: number;
+  pages?: number;
 }
 
 export interface Pdf2EpubEpubUrlResponse {

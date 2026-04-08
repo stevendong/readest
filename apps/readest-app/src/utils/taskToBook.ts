@@ -4,8 +4,27 @@ import type { Book } from '@/types/book';
 import type { Pdf2EpubTask } from '@/services/pdf2epubTypes';
 
 /**
+ * Convert a task UUID to a book hash by removing hyphens.
+ * This is necessary because Readest uses `key.split('-')[0]` throughout the codebase
+ * to extract the book ID from composite keys like `${id}-${uniqueId}`.
+ * UUID hyphens would cause the ID to be truncated.
+ */
+export function taskIdToHash(taskId: string): string {
+  return taskId.replace(/-/g, '');
+}
+
+/**
+ * Convert a book hash back to a task UUID format.
+ * Inserts hyphens at positions 8-4-4-4-12 to reconstruct the UUID.
+ */
+export function hashToTaskId(hash: string): string {
+  if (hash.includes('-')) return hash; // Already a UUID
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20)}`;
+}
+
+/**
  * Convert a single pdf2epub task to a Readest Book object.
- * The task's `id` is used as the book `hash` (unique identifier).
+ * The task's `id` (with hyphens removed) is used as the book `hash` (unique identifier).
  * The `url` field is left empty — it will be set dynamically via `getEpubUrl()` when opening.
  */
 export function taskToBook(task: Pdf2EpubTask): Book {
@@ -16,7 +35,7 @@ export function taskToBook(task: Pdf2EpubTask): Book {
   const coverImageUrl = metadata?.cover_url || null;
 
   return {
-    hash: task.id,
+    hash: taskIdToHash(task.id),
     format: 'EPUB',
     title,
     author,

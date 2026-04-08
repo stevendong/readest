@@ -57,6 +57,15 @@ const nextConfig = {
         source: '/reader/:ids',
         destination: '/reader?ids=:ids',
       },
+      // Proxy pdf2epub API requests in development to avoid CORS issues
+      ...(isDev
+        ? [
+            {
+              source: '/pdf2epub-api/:path*',
+              destination: `${process.env['NEXT_PUBLIC_PDF2EPUB_API_URL'] || 'http://localhost:8000'}/api/:path*`,
+            },
+          ]
+        : []),
     ];
   },
   async headers() {

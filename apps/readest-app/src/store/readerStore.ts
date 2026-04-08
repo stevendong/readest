@@ -149,9 +149,20 @@ export const useReaderStore = create<ReaderStore>((set, get) => ({
       const appService = await envConfig.getAppService();
       const { settings } = useSettingsStore.getState();
       const { library } = useLibraryStore.getState();
-      const book = library.find((b) => b.hash === id);
+      let book = library.find((b) => b.hash === id);
       if (!book) {
-        throw new Error('Book not found');
+        // Book not in library store — try fetching as a pdf2epub task
+        try {
+          const { fetchTask } = await import('@/services/pdf2epubApi');
+          const { taskToBook, hashToTaskId } = await import('@/utils/taskToBook');
+          const task = await fetchTask(hashToTaskId(id));
+          book = taskToBook(task);
+          // Add to library store so subsequent lookups succeed
+          const { setLibrary } = useLibraryStore.getState();
+          setLibrary([...useLibraryStore.getState().library, book]);
+        } catch {
+          throw new Error('Book not found');
+        }
       }
       let bookDoc = bookData?.bookDoc;
       let file = bookData?.file;
@@ -159,7 +170,8 @@ export const useReaderStore = create<ReaderStore>((set, get) => ({
         // For pdf2epub remote books without a local file or URL, fetch the presigned EPUB URL
         if (!book.url && !book.filePath) {
           try {
-            const epubUrl = await getEpubUrl(book.hash);
+            const { hashToTaskId } = await import('@/utils/taskToBook');
+            const epubUrl = await getEpubUrl(hashToTaskId(book.hash));
             book.url = epubUrl;
           } catch (err) {
             console.warn('Failed to get EPUB URL from pdf2epub, trying local:', err);

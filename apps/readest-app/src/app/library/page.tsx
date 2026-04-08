@@ -15,7 +15,7 @@ import { getImportErrorMessage } from '@/services/errors';
 import { eventDispatcher } from '@/utils/event';
 import { getDirPath, getFilename } from '@/utils/path';
 import { isWebAppPlatform } from '@/services/environment';
-import { fetchTasks } from '@/services/pdf2epubApi';
+import { fetchTasks, Pdf2EpubAuthError } from '@/services/pdf2epubApi';
 import { tasksToBooks } from '@/utils/taskToBook';
 
 import { useEnv } from '@/context/EnvContext';
@@ -30,6 +30,7 @@ import { useUICSS } from '@/hooks/useUICSS';
 import { useDemoBooks } from './hooks/useDemoBooks';
 import { useBookDataStore } from '@/store/bookDataStore';
 import { useScreenWakeLock } from '@/hooks/useScreenWakeLock';
+import { useRemoteBookCovers } from '@/hooks/useRemoteBookCovers';
 import { SelectedFile, useFileSelector } from '@/hooks/useFileSelector';
 
 import { LibraryGroupByType } from '@/types/settings';
@@ -60,7 +61,7 @@ const LibraryPageWithSearchParams = () => {
 const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchParams | null }) => {
   const router = useAppRouter();
   const { envConfig, appService } = useEnv();
-  const { user } = useAuth();
+  const { user, ready: authReady } = useAuth();
   const {
     library: libraryBooks,
     updateBook,
@@ -78,6 +79,7 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
   const { clearBookData } = useBookDataStore();
   const { settings, setSettings } = useSettingsStore();
   const { isSettingsDialogOpen, setSettingsDialogOpen } = useSettingsStore();
+  useRemoteBookCovers(libraryBooks);
   const [loading, setLoading] = useState(false);
   const [libraryLoaded, setLibraryLoaded] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
@@ -215,6 +217,7 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
   }, [pendingNavigationBookIds, appService, router]);
 
   useEffect(() => {
+    if (!authReady) return;
     if (isInitiating.current) return;
     isInitiating.current = true;
 
@@ -232,9 +235,14 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
       } else {
         try {
           const response = await fetchTasks(1, 100, 'completed');
-          library = tasksToBooks(response.tasks);
+          library = tasksToBooks(response.items);
         } catch (err) {
-          console.warn('Failed to load books from pdf2epub API, falling back to local:', err);
+          if (err instanceof Pdf2EpubAuthError) {
+            // Not logged in — this is expected, not an error
+            console.log('No pdf2epub session, loading local library');
+          } else {
+            console.warn('Failed to load books from pdf2epub API:', err);
+          }
           library = await appService.loadLibraryBooks();
         }
       }
@@ -257,7 +265,7 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
       isInitiating.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [authReady, searchParams]);
 
   useEffect(() => {
     const group = searchParams?.get('group') || '';
@@ -613,13 +621,13 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
                 ) : (
                   <>
                     <p className='mb-5'>
-                      {_('Please sign in at pdf2epub.com to view your converted books.')}
+                      {_('Please sign in at pdf2epub.ai to view your converted books.')}
                     </p>
                     <button
                       className='btn btn-primary rounded-xl'
-                      onClick={() => window.open('https://pdf2epub.com', '_blank')}
+                      onClick={() => window.open('https://pdf2epub.ai', '_blank')}
                     >
-                      {_('Go to pdf2epub.com')}
+                      {_('Go to pdf2epub.ai')}
                     </button>
                   </>
                 )}

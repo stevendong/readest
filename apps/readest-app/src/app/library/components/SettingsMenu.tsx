@@ -158,9 +158,9 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ setIsDropdownOpen }) => {
         </MenuItem>
       ) : (
         <MenuItem
-          label={_('Sign in at pdf2epub.com')}
+          label={_('Sign in at pdf2epub.ai')}
           Icon={PiUserCircle}
-          onClick={() => window.open('https://pdf2epub.com', '_blank')}
+          onClick={() => window.open('https://pdf2epub.ai', '_blank')}
         ></MenuItem>
       )}
 

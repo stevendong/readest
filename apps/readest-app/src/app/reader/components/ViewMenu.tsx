@@ -84,7 +84,7 @@ const ViewMenu: React.FC<ViewMenuProps> = ({ bookKey, setIsDropdownOpen }) => {
 
   const handleSync = () => {
     if (!user) {
-      // No login redirect; user must sign in via pdf2epub.com
+      // No login redirect; user must sign in via pdf2epub.ai
       return;
     } else {
       eventDispatcher.dispatch('sync-book-progress', { bookKey });
