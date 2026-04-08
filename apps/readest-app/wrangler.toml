@@ -6,21 +6,6 @@ workers_dev = true
 preview_urls = true
 
 [[routes]]
-pattern = "web-cf.readest.com"
-zone_name = "readest.com"
-custom_domain = true
-
-[[routes]]
-pattern = "api-cf.readest.com"
-zone_name = "readest.com"
-custom_domain = true
-
-[[routes]]
-pattern = "web.readest.com"
-zone_name = "readest.com"
-custom_domain = true
-
-[[routes]]
 pattern = "reader.pdf2epub.ai"
 zone_name = "pdf2epub.ai"
 custom_domain = true
