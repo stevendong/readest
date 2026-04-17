@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { useAuth } from '@/context/AuthContext';
 import { useEnv } from '@/context/EnvContext';
 import { Book } from '@/types/book';
 import { getUserLang } from '@/utils/misc';
@@ -19,10 +20,12 @@ interface DemoBooks {
 
 export const useDemoBooks = () => {
   const { envConfig } = useEnv();
+  const { user, ready: authReady } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
   const isLoading = useRef(false);
 
   useEffect(() => {
+    if (!authReady || !user) return;
     if (isLoading.current) return;
     isLoading.current = true;
 
@@ -45,8 +48,7 @@ export const useDemoBooks = () => {
       fetchDemoBooks();
       localStorage.setItem('demoBooksFetched', 'true');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authReady, user, envConfig]);
 
   return books;
 };
