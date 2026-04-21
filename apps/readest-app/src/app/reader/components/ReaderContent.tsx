@@ -27,6 +27,7 @@ import { BOOK_IDS_SEPARATOR } from '@/services/constants';
 import { BookDetailModal } from '@/components/metadata';
 import { fetchTask } from '@/services/pdf2epubApi';
 import { taskToBook } from '@/utils/taskToBook';
+import { useAuth } from '@/context/AuthContext';
 
 import useBooksManager from '../hooks/useBooksManager';
 import useBookShortcuts from '../hooks/useBookShortcuts';
@@ -49,6 +50,7 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
   const { getView, setBookKeys, getViewSettings } = useReaderStore();
   const { initViewState, getViewState, clearViewState } = useReaderStore();
   const { isSettingsDialogOpen, settingsDialogBookKey } = useSettingsStore();
+  const { ready: authReady } = useAuth();
   const [showDetailsBook, setShowDetailsBook] = useState<Book | null>(null);
   const isInitiating = useRef(false);
   const [loading, setLoading] = useState(false);
@@ -58,6 +60,10 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
   useGamepad();
 
   useEffect(() => {
+    const taskId = searchParams?.get('task');
+    // When opening via ?task=, wait for auth to be ready so the session is established
+    if (taskId && !authReady) return;
+
     if (isInitiating.current) return;
     isInitiating.current = true;
 
@@ -66,7 +72,6 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
       let bookIds = ids || searchParams?.get('ids') || pathname.split('/reader/')[1] || '';
 
       // Handle ?task=xxx parameter: fetch the task and add it to the library
-      const taskId = searchParams?.get('task');
       if (taskId && !bookIds) {
         try {
           const task = await fetchTask(taskId);
@@ -119,7 +124,7 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
 
     initBooks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authReady]);
 
   useEffect(() => {
     const handleShowBookDetails = (event: CustomEvent) => {
