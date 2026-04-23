@@ -3,6 +3,7 @@
 import { createContext, useState, useContext, ReactNode, useEffect, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/utils/supabase';
+import { exchangeReaderCode } from '@/services/readerCodeExchange';
 
 interface AuthContextType {
   token: string | null;
@@ -68,10 +69,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    const cleanUrlParams = () => {
+    const stripCodeFromUrl = () => {
       const url = new URL(window.location.href);
-      url.searchParams.delete('access_token');
-      url.searchParams.delete('refresh_token');
+      url.searchParams.delete('code');
       window.history.replaceState({}, '', url.toString());
     };
 
@@ -82,33 +82,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const params = new URLSearchParams(window.location.search);
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
+      const code = params.get('code');
 
-      if (accessToken && refreshToken) {
-        // URL contains tokens from pdf2epub.ai redirect
-        // Only validate access_token format (JWT); refresh_token is an opaque string
-        const isJwt = (t: string) => t.split('.').length === 3;
-        if (!isJwt(accessToken)) {
-          console.warn('URL contains invalid access_token format, ignoring');
-          cleanUrlParams();
-          setReady(true);
-          return;
-        }
-        try {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          if (error) {
-            console.warn('Failed to set session from URL:', error.message);
+      if (code) {
+        // One-time code issued by pdf2epub.ai — exchange for Supabase tokens
+        const tokens = await exchangeReaderCode(code);
+        stripCodeFromUrl();
+        if (tokens) {
+          try {
+            const { error } = await supabase.auth.setSession(tokens);
+            if (error) {
+              console.warn('Failed to set session from exchanged code:', error.message);
+            }
+          } catch (err) {
+            console.warn('Error setting session from exchanged code:', err);
           }
-        } catch (err) {
-          console.warn('Error setting session from URL:', err);
+        } else {
+          console.warn('Reader code exchange failed or returned no tokens');
         }
-        cleanUrlParams();
       } else {
-        // No URL tokens — try restoring existing session
+        // No URL code — try restoring existing session
         try {
           const { data } = await supabase.auth.getSession();
           if (data?.session) {
